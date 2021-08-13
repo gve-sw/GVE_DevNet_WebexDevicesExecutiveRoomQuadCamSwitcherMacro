@@ -1,0 +1,36 @@
+<Extensions>
+  <Version>1.8</Version>
+  <Panel>
+    <Order>1</Order>
+    <PanelId>panel_manual_override</PanelId>
+    <Origin>local</Origin>
+    <Type>Statusbar</Type>
+    <Icon>Camera</Icon>
+    <Color>#FFB400</Color>
+    <Name>Camera Manual Override</Name>
+    <ActivityType>Custom</ActivityType>
+    <Page>
+      <Name>Manual Camera Override</Name>
+      <Row>
+        <Name>Automatic</Name>
+        <Widget>
+          <WidgetId>widget_override</WidgetId>
+          <Type>ToggleButton</Type>
+          <Options>size=1</Options>
+        </Widget>
+        <Widget>
+          <WidgetId>widget_text</WidgetId>
+          <Name>Manual</Name>
+          <Type>Text</Type>
+          <Options>size=1;fontSize=normal;align=center</Options>
+        </Widget>
+        <Widget>
+          <WidgetId>space_1</WidgetId>
+          <Type>Spacer</Type>
+          <Options>size=2</Options>
+        </Widget>
+      </Row>
+      <Options/>
+    </Page>
+  </Panel>
+</Extensions>
