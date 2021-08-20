@@ -73,14 +73,27 @@ const MAIN_CODEC_PASSWORD='password';
 ```  
 
 3) Load the code contained in the 'main_codec_macro.js' into the Macro editor of the main codec and the 'aux_codec_macro.js' into the Macro editor of the auxiliary codec. 'main_codec_macro.js' contains all of the logic to choose which input to select (QuadCam1 connected directly vs QuadCam2 connected indirectly via Aux codec) as well as the logic to make sure that the Aux codec is active and receiving the input from QuadCam2. If you are unfamiliar with Cisco Room device macros and how to manage them, this is a good article to get started: 
-https://help.webex.com/en-us/np8b6m6/Use-of-Macros-with-Room-and-Desk-Devices-and-Webex-Boards
+https://help.webex.com/en-us/np8b6m6/Use-of-Macros-with-Room-and-Desk-Devices-and-Webex-Boards  
+   
+  
+4) To be able to manually turn on and off the functionality of this macro from the Touch 10 device of the Main codec, please import the ```CameraManualOverride.xml``` file into the 
+main codec using it's UI Extension Editor. Without this custom panel installed on the Main codec, you will see errors being logged by the 
+   macro given that it updates the state of toggle buttons on it. If you are unfamiliar with UI Extensions and how to load them from the devices 
+   web interface, visit this article: https://help.webex.com/en-us/n18glho/User-Interface-Extensions-with-Room-and-Desk-Devices-and-Webex-Boards . 
+   You can find more details and screenshots also in this guide: https://www.cisco.com/c/dam/en/us/td/docs/telepresence/endpoint/roomos-103/desk-room-kit-boards-customization-guide-roomos-103.pdf
+  
+NOTE: The macro is written to hide the mid-call controls “Lock meeting” and “Record”.  The reason for this is so that the
+ custom “Camera Control” button added above can be seen always in a call without having to press on the More.. button. 
+If you prefer to have the mid-call controls always showing edit line 34 of the 'main_codec_macro.js' on the main codec that has the following config command:  
+```
+xapi.Config.UserInterface.Features.Call.MidCallControls.set("Hidden")
+```  
+and change the value in the string being sent as a parameter from “Hidden” to “Auto”
 
-4) If you wish to have a way to manually turn on and off the functionality of this macro from the Touch 10 device of the Main codec, please import the ```CameraManualOverride.xml``` file into the 
-main codec using it's UI Extension Editor 
 
 ## Usage
 
-Once the macros are loaded and activated, the correct video switching behavior should occur automatically.
+Once the macros are loaded and activated, the correct video switching behavior should occur automatically every time a call connects.  
 
 To manually turn on and off the Automatic switching based on microphone input across the two quad cams, you can use the panel installed on step 4 above; just press the Camera Control button on the Touch 10:
 
@@ -90,6 +103,15 @@ To manually turn on and off the Automatic switching based on microphone input ac
 That should bring up the following Panel where you can select the behavior desired: 
 
 ![IMAGES/CameraControlPanel.jpg](IMAGES/CameraControlPanel.jpg)
+  
+
+The following actions with turn off the automatic behaviour for you in addition to manually turning it off:  
+  
+a) When a call disconnects  
+b) Bringing the main codec out of half-wake mode  
+
+
+
 
 ### LICENSE
 
