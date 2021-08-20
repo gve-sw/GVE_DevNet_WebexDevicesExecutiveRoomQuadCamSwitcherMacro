@@ -12,7 +12,7 @@ Webex Room Device macro to switch input source to QuadCam camera pointed in the 
 * xAPI
 
 ## Installation/Configuration
-This sample includes 2 macros that are installed on separate Webex Codecs to work in conjunction to cover a large executive room with 2 QuadCam cameras given the limitation that only 1 QuadCam can be connected to a codec. The first QuadCam is connected to the main codec (typically a Webex Codec Plus) and the second one to the auxiliary codec (typically a Webex Codec Plus) which in turn has it's HDMI 1 video output connected to the main codec into it's HDMI 2 input. 
+This sample includes 2 macros that are installed on separate Webex Codecs to work in conjunction to cover a large executive room with 2 QuadCam cameras given the limitation that only 1 QuadCam can be connected to a codec. The first QuadCam is connected to the main codec (typically a Webex Codec Pro) and the second one to the auxiliary codec (typically a Webex Codec Plus) which in turn has it's HDMI 1 video output connected to the main codec into it's HDMI 2 input. 
 
 This diagram shows how the codecs should be connected when it comes to the video connections. Notice that the camera input 2 on the Primary (Main) Codec comes from 
 Output 1 on the Auxiliary codec since we are just using that codec to pass along the video from the QuadCam. 
@@ -45,8 +45,7 @@ const CONNECTORS = [1,2,3,4,5,6,7,8];
 ```
 const MAP_CAMERA_SOURCE_IDS = [1,1,1,1,2,2,2,2];
 ```  
-- overviewShowDouble: Defines what is shown on the far end (the video the main codec sends into the call or conference) when in "overview" mode where nobody is speaking or there is no
-prominent speaker detected by any of the microphones. The example below shows how to enable that the two inputs defined in OVERVIEW_DOUBLE_SOURCE_IDS are shown side by side. 
+- overviewShowDouble: Defines what is shown to the far end (the video the main codec sends into the call or conference) when in "overview" mode where nobody is speaking or there is no prominent speaker detected by any of the microphones. The example below shows how to enable that the two inputs defined in OVERVIEW_DOUBLE_SOURCE_IDS are shown side by side. 
 ``` 
 const overviewShowDouble = true
 ```  
@@ -83,7 +82,14 @@ main codec using it's UI Extension Editor
 
 Once the macros are loaded and activated, the correct video switching behavior should occur automatically.
 
- 
+To manually turn on and off the Automatic switching based on microphone input across the two quad cams, you can use the panel installed on step 4 above; just press the Camera Control button on the Touch 10:
+
+
+![IMAGES/Touch10Initial.png](IMAGES/Touch10Initial.png)
+
+That should bring up the following Panel where you can select the behavior desired: 
+
+![IMAGES/CameraControlPanel.jpg](IMAGES/CameraControlPanel.jpg)
 
 ### LICENSE
 

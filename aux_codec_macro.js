@@ -20,7 +20,7 @@ const xapi = require('xapi');
 /////////////////////////////////////////////////////////////////////////////////////////
 
 // IP Address of MAIN codec (i.e. CodecPro)
-const MAIN_CODEC_IP ='10.23.123.163';
+const MAIN_CODEC_IP ='10.10.10.11';
 
 // MAIN_CODEC_USERNAME and MAIN_CODEC_PASSWORD are the username and password of a user with integrator or admin roles on the Main Codec
 // Here are instructions on how to configure local user accounts on Webex Devices: https://help.webex.com/en-us/jkhs20/Local-User-Administration-on-Room-and-Desk-Devices)
@@ -54,7 +54,10 @@ const MAIN_CODEC_AUTH=encode(MAIN_CODEC_USERNAME+':'+MAIN_CODEC_PASSWORD);
 
 xapi.config.set('Video Monitors', 'Single');
 xapi.config.set('Video Output Connector 1 MonitorRole', 'First');
-// xapi.config.set('Video Output Connector 2 MonitorRole', 'Second');
+xapi.config.set('Standby Halfwake Mode', 'Manual').catch((error) => {
+      console.log('Your software version does not support this configuration.  Please install ‘Custom Wallpaper’ on the codec in order to prevent Halfwake mode from occurring.');
+      console.error(error);
+  });
 
 xapi.config.set('Standby Control', 'Off');
 xapi.command('Video Selfview Set', {Mode: 'On', FullScreenMode: 'On', OnMonitorRole: 'First'})
@@ -109,15 +112,15 @@ function sendIntercodecMessage(message) {
 
 /* This is the end of the startup script section.  At this point the aux_codec should be ready to receive messages
 from the main_codec.
-THRERE ARE ONLY FOUR MESSAGES:
+THRERE ARE FIVE MESSAGES:
 1. wake_up
-2. shut_down
-3. side-by-side 
+2. VTC-1_status which is sent at the same time as wake-up, and is intended to check the health of the Aux Codec Plus.
+3. shut_down
+4. side-by-side 
 	This is the default mode that is used when the mute button is pressed, after the "side by side timer" expires, and also
 	at the beginning of any call.
-4. automatic_mode
+5. automatic_mode
 	This is the automatic camera switching function. 
-
 */
 
 // ---------------------- MACROS
@@ -135,7 +138,6 @@ function handleMessage(event) {
     case 'shut_down':
       handleShutDown();
       break;
-// EC I ADDED THESE
  case 'side_by_side':
       handleSideBySide();
       break;
@@ -144,14 +146,6 @@ function handleMessage(event) {
       break;
   }
 }
-/*
-
-<<<
-EC - Wakeup and shutdown work correctly now.  If I put the Primary into Standby, the Aux
-goes into standby. If I wake up the Primary, the Aux wakes up.
->>>
-
-*/
 
 function handleMacroStatus() {
   console.log('handleMacroStatus');
@@ -172,15 +166,12 @@ function handleShutDown() {
   xapi.command('Standby Activate').catch(handleError);
 }
 
-// EC I need these two new messages to be sent from the Primary at the proper times
-
 function handleSideBySide() {
   console.log('handleSideBySide');
 
   // send required commands to this codec
   xapi.command('Cameras SpeakerTrack Deactivate').catch(handleError);
   xapi.command('Camera Preset Activate', { PresetId: 30 }).catch(handleError);
-
 }
 
 function handleAutomaticMode() {

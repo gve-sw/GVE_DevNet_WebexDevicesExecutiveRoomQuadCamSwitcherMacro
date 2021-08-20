@@ -22,13 +22,16 @@ const xapi = require('xapi');
 /////////////////////////////////////////////////////////////////////////////////////////
 
 // IP Address of AUX codec (i.e. CodecPlus)
-const AUX_CODEC_IP ='192.168.0.80';
+const AUX_CODEC_IP ='10.10.10.10';
 
-// AUX_CODEC_USERNAME and AUX_CODEC_PASSWORD are the username and password of a user with integrator or admin roles on the Auxiliary codec
+// AUX_CODEC_USERNAME and AUX_CODEC_PASSWORD are the username and password of a admin-level user on the Auxiliary codec
 // Here are instructions on how to configure local user accounts on Webex Devices: https://help.webex.com/en-us/jkhs20/Local-User-Administration-on-Room-and-Desk-Devices)
 const AUX_CODEC_USERNAME='username';
 const AUX_CODEC_PASSWORD='password';
 
+// This next line hides the mid-call controls “Lock meeting” and “Record”.  The reason for this is so that the
+// “Camera Control” button can be seen.  If you prefer to have the mid-call controls showing, change the value of this from “Hidden” to “Auto”
+xapi.Config.UserInterface.Features.Call.MidCallControls.set("Hidden");
 
 function encode(s) {
     var c = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=",
@@ -66,6 +69,10 @@ const MAP_CAMERA_SOURCE_IDS = [1,1,1,1,2,2,2,2];
 
 // overviewShowDouble defines what is shown on the far end (the video the main codec sends into the call or conference) when in "overview" mode where nobody is speaking or there is no
 // prominent speaker detected by any of the microphones
+// INSTRUCTIONS: If you are using side-by-side mode as your default - "overviewShowDouble = true" - then you must set up a camera preset for each Quad Camera
+// with a Preset ID of 30.  The JavaScript for side-by-side mode uses Preset 30.
+// EC - what happens if they set this value to false?  I know the function is "recallSideBySideMode" but I don't quite understand the logic in "let 
+// sourceDict={ Source : '0'};"
 const overviewShowDouble = true;
 
 // OVERVIEW_SINGLE_SOURCE_ID specifies the source video ID to use when in overview mode if you set overviewShowDouble to false
@@ -75,8 +82,6 @@ const OVERVIEW_SINGLE_SOURCE_ID = 1;
 // it will display the two sources side by side on the main screen with the first value of the array on the
 // left and the second on the right.
 const OVERVIEW_DOUBLE_SOURCE_IDS = [2,1];
-
-
 
 // Time to wait for silence before setting Speakertrack Side-by-Side mode
 const SIDE_BY_SIDE_TIME = 7000; // 7 seconds
@@ -109,6 +114,42 @@ let manual_mode = true;
 // INITIALIZATION
 /////////////////////////////////////////////////////////////////////////////////////////
 
+
+
+function evalFullScreen(value) {
+	if (value=='On') {
+		xapi.command('UserInterface Extensions Widget SetValue', {WidgetId: 'widget_FS_selfview', Value: 'on'});
+	}
+	else
+	{
+		xapi.command('UserInterface Extensions Widget SetValue', {WidgetId: 'widget_FS_selfview' , Value: 'off'});
+	}
+}
+
+// evalFullScreenEvent is needed because we have to check when someone manually turns on full screen
+// when self view is already selected... it will eventually check FullScreen again, but that should be
+// harmless
+function evalFullScreenEvent(value)
+{
+	if (value=='On') {
+		xapi.Status.Video.Selfview.Mode.get().then(evalSelfView);
+	}
+	else
+	{
+		xapi.command('UserInterface Extensions Widget SetValue', {WidgetId: 'widget_FS_selfview', Value: 'off'});
+	}
+}
+
+function evalSelfView(value) {
+	if (value=='On') {
+		xapi.Status.Video.Selfview.FullscreenMode.get().then(evalFullScreen);
+	}
+	else
+	{
+		xapi.command('UserInterface Extensions Widget SetValue', {WidgetId: 'widget_FS_selfview', Value: 'off'});
+	}
+}
+
 function init() {
   console.log('init');
   // configure HTTP settings
@@ -136,7 +177,7 @@ function init() {
   // register callback for processing messages from aux_codec
   xapi.event.on('Message Send', handleMessage);
 
-  // EC register event handlers for local events
+  // register event handlers for local events
   xapi.Status.Standby.State
 	.on(value => {
 					console.log(value);
@@ -147,6 +188,7 @@ function init() {
     // register handler for Widget actions
     xapi.event.on('UserInterface Extensions Widget Action', (event) =>
                             handleOverrideWidget(event));
+
     // register handler for Call Successful
     xapi.Event.CallSuccessful.on(async () => {
       console.log("Starting new call timer...");
@@ -160,6 +202,20 @@ function init() {
         xapi.Command.Video.Selfview.Set({ Mode: 'off'});
         stopAutomation();
     });
+
+    //  set self-view toggle on custom panel depending on Codec status that might have been set manually
+    xapi.Status.Video.Selfview.Mode.get().then(evalSelfView);
+
+    // register to receive events when someone manually turns on self-view
+    // so we can keep the custom toggle button in the right state
+    xapi.Status.Video.Selfview.Mode.on(evalSelfView);
+
+    // register to receive events when someone manually turns on full screen mode
+    // so we can keep the custom toggle button in the right state if also in self view
+    xapi.Status.Video.Selfview.FullscreenMode.on(evalFullScreenEvent);
+
+    // next, set Automatic mode toggle switch on custom panel off since the macro starts that way
+    xapi.command('UserInterface Extensions Widget SetValue', {WidgetId: 'widget_override', Value: 'off'});
 
 }
 
@@ -184,7 +240,7 @@ function startAutomation() {
         micArrays[event.id[0]].pop();
         micArrays[event.id[0]].push(event.VuMeter);
 
-        // checking on manual_mode might be unnecessary because , in manual mode,
+        // checking on manual_mode might be unnecessary because in manual mode,
         // audio events should not be triggered
         if (manual_mode==false)
         {
@@ -202,6 +258,8 @@ function startAutomation() {
           Source: 'AfterAEC'
     });
   }
+  // set toggle button on custom panel to reflect that automation is turned on.
+  xapi.command('UserInterface Extensions Widget SetValue', {WidgetId: 'widget_override', Value: 'on'});
 }
 
 function stopAutomation() {
@@ -212,6 +270,9 @@ function stopAutomation() {
          console.log("Switching to MainVideoSource connectorID 1 ...");
          xapi.Command.Video.Input.SetMainVideoSource({ SourceId: 1});
          xapi.event.on('Audio Input Connectors Microphone', (event) => null);
+         // set toggle button on custom panel to reflect that automation is turned off.
+         xapi.command('UserInterface Extensions Widget SetValue', {WidgetId: 'widget_override', Value: 'off'});
+
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////
@@ -318,7 +379,6 @@ function recallSideBySideMode() {
         xapi.command('Video Input SetMainVideoSource', connectorDict).catch(handleError);
         xapi.command('Cameras SpeakerTrack Deactivate').catch(handleError);
         xapi.command('Camera Preset Activate', { PresetId: 30 }).catch(handleError);
-      // EC I added the last two commands above
     }
     else {
         let sourceDict={ SourceID : '0'};
@@ -341,26 +401,41 @@ function handleOverrideWidget(event)
 {
          if (event.WidgetId === 'widget_override')
          {
-            console.log("Manual Camera Override toggle selected.....")
-            if (event.Value === 'on') {
+            console.log("Camera Control button selected.....")
+            if (event.Value === 'off') {
 
-                    console.log("Manual Camera Override is set to ON...");
-                    console.log("Stoping automation...")
+                    console.log("Camera Control is set to Manual...");
+                    console.log("Stopping automation...")
                     stopAutomation();
                 }
                else
                {
 
                   // start VuMeter monitoring
-                  console.log("Manual Camera Override is set to OFF...");
-                  console.log("Stating automation...")
+                  console.log("Camera Control is set to Automatic...");
+                  console.log("Starting automation...")
                   startAutomation();
                }
          }
 
+
+         if (event.WidgetId === 'widget_FS_selfview')
+         {
+            console.log("Selfview button selected.....")
+            if (event.Value === 'off') {
+                    console.log("Selfview is set to Off...");
+                    console.log("turning off self-view...")
+                    xapi.Command.Video.Selfview.Set({ FullscreenMode: 'Off', Mode: 'Off', OnMonitorRole: 'First'});
+                }
+               else
+               {
+                  console.log("Selfview is set to On...");
+                  console.log("turning on self-view...")
+                  // TODO: determine if turning off self-view should also turn off fullscreenmode
+                  xapi.Command.Video.Selfview.Set({ FullscreenMode: 'On', Mode: 'On', OnMonitorRole: 'First'});
+               }
+         }
 }
-
-
 
 
 /////////////////////////////////////////////////////////////////////////////////////////
@@ -461,6 +536,8 @@ function handleCodecOnline(codec) {
 
 function handleWakeUp() {
   console.log('handleWakeUp');
+  // stop automatic switching behavior
+  stopAutomation();
   // send wakeup to AUX codec
   sendIntercodecMessage(AUX_CODEC, 'wake_up');
   // check the satus of the macros running on the AUX codec and store it in AUX_CODEC.online
