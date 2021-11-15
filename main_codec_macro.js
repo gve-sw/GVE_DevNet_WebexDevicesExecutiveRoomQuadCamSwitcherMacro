@@ -109,6 +109,7 @@ let allowNewSpeaker = true;
 let newSpeakerTimer = null;
 let manual_mode = true;
 
+let micHandler= () => void 0;
 
 /////////////////////////////////////////////////////////////////////////////////////////
 // INITIALIZATION
@@ -236,7 +237,7 @@ function startAutomation() {
    xapi.command('Cameras SpeakerTrack Activate').catch(handleError);
 
    //registering vuMeter event handler
-   xapi.event.on('Audio Input Connectors Microphone', (event) => {
+   micHandler=xapi.event.on('Audio Input Connectors Microphone', (event) => {
         micArrays[event.id[0]].pop();
         micArrays[event.id[0]].push(event.VuMeter);
 
@@ -269,7 +270,10 @@ function stopAutomation() {
          xapi.Command.Audio.VuMeter.StopAll({ });
          console.log("Switching to MainVideoSource connectorID 1 ...");
          xapi.Command.Video.Input.SetMainVideoSource({ SourceId: 1});
-         xapi.event.on('Audio Input Connectors Microphone', (event) => null);
+         // using proper way to de-register handlers
+         micHandler();
+         micHandler= () => void 0;
+
          // set toggle button on custom panel to reflect that automation is turned off.
          xapi.command('UserInterface Extensions Widget SetValue', {WidgetId: 'widget_override', Value: 'off'});
 
