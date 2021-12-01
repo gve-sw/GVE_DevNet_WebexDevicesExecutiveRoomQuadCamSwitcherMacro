@@ -340,12 +340,15 @@ function makeCameraSwitch(input, average) {
   console.log("High Triggered: ");
   console.log(`Input = ${input} | Average = ${average}`);
   console.log("-------------------------------------------------");
+   // turning back on SpeakerTrack on my codec in case it was turned off in side by side mode.
+  xapi.command('Cameras SpeakerTrack Activate').catch(handleError);
    // Switch to the source that is speficied in the same index position in MAP_CAMERA_SOURCE_IDS
   let sourceDict={ SourceID : '0'}
   sourceDict["SourceID"]=MAP_CAMERA_SOURCE_IDS[CONNECTORS.indexOf(input)].toString();
   console.log("Trying to use this for source dict: ", sourceDict  )
   xapi.command('Video Input SetMainVideoSource', sourceDict).catch(handleError);
-  // send required messages to auxiliary codec
+
+  // send required messages to auxiliary codec that also turns on speakertrack over there
   sendIntercodecMessage(AUX_CODEC, 'automatic_mode');
   lastActiveHighInput = input;
   restartNewSpeakerTimer();
