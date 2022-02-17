@@ -11,6 +11,9 @@ Webex Room Device macro to switch input source to QuadCam camera pointed in the 
 * Javascript
 * xAPI
 
+## Requirements
+* Devices must be running RoomOS 10.8 or later
+
 ## Installation/Configuration
 This sample includes 2 macros that are installed on separate Webex Codecs to work in conjunction to cover a large executive room with 2 QuadCam cameras given the limitation that only 1 QuadCam can be connected to a codec. The first QuadCam is connected to the main codec (typically a Webex Codec Pro) and the second one to the auxiliary codec (typically a Webex Codec Plus) which in turn has it's HDMI 1 video output connected to the main codec into it's HDMI 2 input. 
 
