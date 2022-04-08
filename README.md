@@ -1,6 +1,9 @@
 # GVE DevNet Webex Devices Executive Room QuadCam Switcher Macro
 Webex Room Device macro to switch input source to QuadCam camera pointed in the direction of the area of the room that has audio activity as detected by the table microphones in the zone. 
 
+**NOTE:** There is a new version of this macro that supports also P60 and 4K PTZ cameras in addition to other enhancements.  
+It is located here: 
+https://github.com/gve-sw/gve_devnet_webex_devices_executive_room_voice_activated_switching_macro
 
 ## Contacts
 * Gerardo Chaves (gchaves@cisco.com)
